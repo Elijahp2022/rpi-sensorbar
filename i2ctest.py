@@ -32,9 +32,15 @@ while(1):
 	time.sleep(0.002)
 	bus.write_byte_data(address, 0x10, 0x00)
 
-	lastBarRawvalue = bus.read_byte_data(address, 0x11)
+	lastBarRawValue = bus.read_byte_data(address, 0x11)
 
 	bus.write_byte_data(address, 0x10, 0x03)
 
-	print(f"last bar raw value: {lastBarRawvalue}")
+	#print(f"last bar raw value: {lastBarRawValue}")
+	
+	# print binary value:
+	for i in range(7, -1,-1):
+		print((lastBarRawValue >> i) & 0x01, end="")
+	print("b")
+
 	time.sleep(0.1)
