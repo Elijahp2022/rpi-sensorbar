@@ -26,8 +26,7 @@ if testRegisters == 0xFF00:
 else:
 	print("testing registers gone bad!")
 
-while(1):
-	#scan() recreation, excluding barstrobe checking
+def scan():
 	bus.write_byte_data(address, 0x10, 0x02)
 	time.sleep(0.002)
 	bus.write_byte_data(address, 0x10, 0x00)
@@ -35,12 +34,71 @@ while(1):
 	lastBarRawValue = bus.read_byte_data(address, 0x11)
 
 	bus.write_byte_data(address, 0x10, 0x03)
+	return lastBarRawValue
 
-	#print(f"last bar raw value: {lastBarRawValue}")
+def getPosition():
+	accumulator = 0
+	bitsCounted = 0
+	i = 0
+
+	rawBarValue = scan()
+
+	# count active bits
+	for i in range(8):
+		if ((rawBarValue >> i) & 0x01) == 1:
+			bitsCounted += 1
+
+	i = 0
+
+	# count negative position
+	for i in range(7, 3, -1):
+		if ((rawBarValue >> i) &0x01) == 1:
+			accumulator += ((-32*(i-3))+1)
+
+	i = 0
+	# count positive position
+	for i in range(4):
+		if ((rawBarValue >> i) &0x01) == 1:
+			accumulator += ((32*(4-i)-1))
+
+
+	if bitsCounted > 0:
+		positionValue = accumulator/bitsCounted
+
+	else:
+		positionValue = 0
+
+	return int(positionValue)
+
+
+def getDensity():
+	bitsCounted = 0
+	i = 0
+
+	rawBarValue = scan()
+
+	for i in range(8):
+		if ((rawBarValue >> i) &0x01) == 1:
+			bitsCounted += 1
+
+	return bitsCounted
+while(1):
+	#scan() recreation, excluding barstrobe checking
+	#bus.write_byte_data(address, 0x10, 0x02)
+	#time.sleep(0.002)
+	#bus.write_byte_data(address, 0x10, 0x00)
+
+	#lastBarRawValue = bus.read_byte_data(address, 0x11)
+
+	#bus.write_byte_data(address, 0x10, 0x03)
+	lastBarRawValue = scan()
+	print(f"last bar raw value: {hex(lastBarRawValue)}")
+	print(f"position: {getPosition()}")
+	print(f"density: {getDensity()}")
 	
 	# print binary value:
 	for i in range(7, -1,-1):
 		print((lastBarRawValue >> i) & 0x01, end="")
 	print("b")
 
-	time.sleep(0.1)
+	time.sleep(0.500)
